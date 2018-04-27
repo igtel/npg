@@ -1,0 +1,13 @@
+# This file is only an example.
+# Grafana will never read sample.yaml files
+
+# # config file version
+# apiVersion: 1
+
+#providers:
+# - name: 'default'
+#   orgId: 1
+#   folder: ''
+#   type: file
+#   options:
+#     path: /var/lib/grafana/dashboards

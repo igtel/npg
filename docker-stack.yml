@@ -1,0 +1,140 @@
+version: '3.1'
+
+networks:
+  monitor:
+
+services:
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - ./prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention=35d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-admin-api'
+      - '--web.enable-lifecycle'
+    ports:
+      - 9090:9090
+    networks:
+      - monitor
+    deploy:
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.hostname == ${HOSTNAME}
+
+  alertmanager:
+    image: prom/alertmanager
+    ports:
+      - 9093:9093
+    volumes:
+      - ./alertmanager/:/etc/alertmanager/
+    networks:
+      - monitor
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    deploy:
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.hostname == ${HOSTNAME}
+  cadvisor:
+    image: google/cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - 8080:8080
+    networks:
+      - monitor
+    deploy:
+#      mode: global
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.hostname == ${HOSTNAME}
+
+  grafana:
+    image: grafana/grafana
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana_data:/var/lib/grafana
+    env_file:
+      - config.grafana
+    networks:
+      - monitor
+    deploy:
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.hostname == ${HOSTNAME}
+
+  blackbox:
+    image: prom/blackbox-exporter
+    ports:
+      - 9115:9115
+    volumes:
+      - ./blackbox_exporter:/config
+    networks:
+      - monitor
+    command:
+      - '--config.file=/config/config.yml'
+    deploy:
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.hostname == ${HOSTNAME}
+
+#  netdata:
+#    image: titpetric/netdata
+#    volumes:
+#      - /proc:/host/proc:ro
+#      - /sys:/host/sys:ro
+#      - ./netdata/:/etc/netdata/
+#    cap_add:
+#      - SYS_PTRACE
+#    ports:
+#      - 19999:19999
+#    deploy:
+#      restart_policy:
+#        condition: any
+#      placement:
+#        constraints:
+#          - node.hostname == ${HOSTNAME}
+#
+#  node-exporter:
+#    image: prom/node-exporter
+#    volumes:
+#      - /proc:/host/proc:ro
+#      - /sys:/host/sys:ro
+#      - /:/rootfs:ro
+#    command:
+#      - '--path.procfs=/host/proc'
+#      - '--path.sysfs=/host/sys'
+#      - --collector.filesystem.ignored-mount-points
+#      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+#    ports:
+#      - 9100:9100
+#    deploy:
+#      restart_policy:
+#        condition: any
+#      placement:
+#        constraints:
+#          - node.hostname == ${HOSTNAME}
+#

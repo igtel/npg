@@ -1,0 +1,15 @@
+route:
+    receiver: 'mail'
+    group_wait: 30s
+    group_interval: 5m
+
+receivers:
+    - name: 'mail'
+      email_configs:
+      - send_resolved: true
+        to: <recipient_email>
+        from: <from_email>
+        smarthost: <smtp_server:port>
+        hello: <hello_greet>
+        require_tls: false
+

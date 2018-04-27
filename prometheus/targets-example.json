@@ -1,0 +1,16 @@
+[
+  {
+    "targets": [ "<netdata_ip_address_1>:19999" ],
+    "labels": {
+      "env": "prod",
+      "job": "<netdata_hostname_1>"
+    }
+  },
+  {
+    "targets": [ "<netdata_ip_address_2>:19999" ],
+    "labels": {
+      "env": "prod",
+      "job": "<netdata_hostname_2"
+    }
+  }
+]

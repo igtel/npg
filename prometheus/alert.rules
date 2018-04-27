@@ -1,0 +1,88 @@
+groups:
+- name: example
+  rules:
+
+  # Alert for any instance that is unreachable for >5 minutes.
+  - alert: service_down
+    expr: up == 0
+    for: 2m
+    labels:
+      severity: page
+    annotations:
+      summary: "Instance {{ $labels.instance }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 2 minutes."
+
+  - alert: high_load
+    expr: node_load1 > 0.5
+    for: 2m
+    labels:
+      severity: page
+    annotations:
+      summary: "Instance {{ $labels.instance }} under high load"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} is under high load."
+
+- name: memory
+  rules:
+
+  - alert: ram_in_use
+    expr: 100*sum(netdata_system_ram_MB_average{chart="system.ram",family="ram",dimension="used"}) by (job)/sum(netdata_system_ram_MB_average{chart="system.ram",family="ram",dimension=~"used|cached|free"}) by (job) > 90
+    for: 5m
+    labels:
+      severity: major
+    annotations:
+      title: "system RAM used major"
+      summary: "Job {{ $labels.job }} system RAM used, as a percentage of the system RAM"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} RAM usage=(current value: {{ $value }})"  
+
+  - alert: ram_available
+    expr: 100*sum(netdata_system_ram_MB_average{chart="system.ram",dimension="avail",family="ram"}) by (job)/sum(netdata_system_ram_MB_average{chart="system.ram",dimension=~"used|cached|free|buffers",family="ram"}) by (job) < 10
+    for: 5m
+    labels:
+      severity: major
+    annotations:
+      title: "Available RAM major"
+      summary: "Job {{ $labels.job }} estimated amount of RAM available for userspace processes, without causing swapping"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} RAM available=(current value: {{ $value }})" 
+
+  - alert: ram_in_swap
+    expr: 100*sum(netdata_system_swap_MB_average{chart="system.swap",dimension="used",family="swap"}) by (job)/sum(netdata_system_ram_MB_average{chart="system.ram",family="ram"}) by (job) > 30
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      title: "swap usage major"
+      summary: "Job {{ $labels.job }} the swap memory used, as a percentage of the system RAM"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} Swap usage=(current value: {{ $value }})"
+
+- name: cpu
+  rules:
+
+  - alert: 10min_cpu_usage
+    expr: sum(netdata_system_cpu_percentage_average{chart="system.cpu",family="cpu",dimension=~"user|system|softirq|irq|guest"}) by (job) > 85
+    for: 10m
+    labels:
+      severity: major
+    annotations:
+      title: "cpu usage major"
+      summary: "High average cpu usage"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} average cpu utilization for the last 10 minutes (excluding iowait, nice and steal) (current value: {{ $value }})"	  
+
+  - alert: 10min_cpu_iowait
+    expr: sum(netdata_system_cpu_percentage_average{chart="system.cpu",family="cpu",dimension="iowait"}) by (job) > 40
+    for: 10m
+    labels:
+      severity: major
+    annotations:
+      title: "cpu wait I/O usage major"
+      summary: "High average cpu wait I/O usage"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} average cpu utilization wait I/O for the last 10 minutes (current value: {{ $value }})"	  	  
+
+  - alert: 20min_steal_cpu
+    expr: sum(netdata_system_cpu_percentage_average{chart="system.cpu",family="cpu",dimension="steal"}) by (job) > 40
+    for: 20m
+    labels:
+      severity: major
+    annotations:
+      title: "cpu steal time usage major"
+      summary: "High average cpu steal time usage"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} average cpu utilization steal time for the last 20 minutes (current value: {{ $value }})"  

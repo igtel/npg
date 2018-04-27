@@ -1,0 +1,9 @@
+[
+  {
+    "targets": [ "zimbra.igtel.ru:19999" ],
+    "labels": {
+      "env": "prod",
+      "job": "zimbra"
+    }
+  }
+]
